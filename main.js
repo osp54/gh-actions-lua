@@ -63,16 +63,21 @@ const processCwd = () => {
   return process.cwd().split(path.sep).join(path.posix.sep);
 }
 
-async function finish_luajit_install(src, dst, luajit) {
+async function finish_luajit_install(src, dst, luajitBinary) {
   if (isWindows()) {
-    await fsp.copyFile(pathJoin(src, "lua51.dll"), pathJoin(dst, "bin", "lua51.dll"))
-    await fsp.copyFile(pathJoin(src, "lua51.dll"), pathJoin(dst, "lib", "lua51.dll"))
+    await io.mkdirP(pathJoin(dst, "lib"))
+    await fsp.copyFile(pathJoin(src, "lua51.lib"), pathJoin(dst, "lib", "lua51.lib"));
+    await fsp.copyFile(pathJoin(src, "lua51.dll"), pathJoin(dst, "lib", "lua51.dll"));
 
-    await exec.exec(`ln -s ${luajit} lua.exe`, undefined, {
-      cwd: pathJoin(dst, "bin")
-    })
+    await io.mkdirP(pathJoin(dst, "bin"))
+    await fsp.copyFile(pathJoin(src, "luajit.exe"), pathJoin(dst, "bin", "luajit.exe")); // Or the appropriate executable name
+    await exec.exec(`ln -s ${luajitBinary}.exe lua.exe`, undefined, { cwd: pathJoin(dst, "bin") })
+
+    const luaHpp = (await exists(pathJoin(src, "lua.hpp"))) ? "lua.hpp" : "../etc/lua.hpp"; // Adjust path if needed
+    const headers = ["lua.h", "luaconf.h", "lualib.h", "lauxlib.h", luaHpp];
+    await install_files(pathJoin(dst, "include"), src, headers);
   } else {
-    await exec.exec(`ln -s ${luajit} lua`, undefined, {
+    await exec.exec(`ln -s ${luajitBinary} lua`, undefined, {
       cwd: pathJoin(dst, "bin")
     })
   }
@@ -112,14 +117,20 @@ async function install_luajit(luaInstallPath, luaVersion) {
     finalCompileFlags += ` ${luaCompileFlags}`
   }
 
-  await exec.exec(`make ${finalCompileFlags}`, undefined, {
+  if (isWindows()) {
+    await exec.exec("msvcbuild.bat", undefined, {
+      cwd: pathJoin(buildPath, baseDir, "src")
+    })
+  } else {
+    await exec.exec(`make ${finalCompileFlags}`, undefined, {
     cwd: pathJoin(buildPath, baseDir),
     ...(isWindows() ? { env: { SHELL: 'cmd' }} : {})
-  })
+    })
 
-  await exec.exec(`make -j install PREFIX="${luaInstallPath}"`, undefined, {
-    cwd: pathJoin(buildPath, baseDir)
-  })
+    await exec.exec(`make -j install PREFIX="${luaInstallPath}"`, undefined, {
+      cwd: pathJoin(buildPath, baseDir)
+    })
+  }
 
   await finish_luajit_install(pathJoin(buildPath, baseDir, "src"), luaInstallPath, repo.binary)
 }
