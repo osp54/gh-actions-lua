@@ -71,7 +71,7 @@ async function finish_luajit_install(src, dst, luajitBinary) {
 
     await io.mkdirP(pathJoin(dst, "bin"))
     await fsp.copyFile(pathJoin(src, "luajit.exe"), pathJoin(dst, "bin", "luajit.exe")); // Or the appropriate executable name
-    await exec.exec(`ln -s ${pathJoin(dst, "bin", "luajit.exe")}.exe lua.exe`, undefined, { cwd: pathJoin(dst, "bin") })
+    await exec.exec(`ln -s luajit.exe lua.exe`, undefined, { cwd: pathJoin(dst, "bin") })
 
     const luaHpp = (await exists(pathJoin(src, "lua.hpp"))) ? "lua.hpp" : "../etc/lua.hpp"; // Adjust path if needed
     const headers = ["lua.h", "luaconf.h", "lualib.h", "lauxlib.h", luaHpp];
