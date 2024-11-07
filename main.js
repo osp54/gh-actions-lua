@@ -70,6 +70,7 @@ async function finish_luajit_install(src, dst, luajitBinary) {
     await fsp.copyFile(pathJoin(src, "lua51.dll"), pathJoin(dst, "lib", "lua51.dll"));
 
     await io.mkdirP(pathJoin(dst, "bin"))
+    await fsp.copyFile(pathJoin(src, "lua51.dll"), pathJoin(dst, "bin", "lua51.dll"));
     await fsp.copyFile(pathJoin(src, "luajit.exe"), pathJoin(dst, "bin", "luajit.exe")); // Or the appropriate executable name
     await exec.exec(`ln -s luajit.exe lua.exe`, undefined, { cwd: pathJoin(dst, "bin") })
 
