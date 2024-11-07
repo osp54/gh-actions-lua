@@ -118,7 +118,7 @@ async function install_luajit(luaInstallPath, luaVersion) {
   }
 
   if (isWindows()) {
-    await exec.exec("msvcbuild.bat", undefined, {
+    await exec.exec("./msvcbuild.bat", undefined, {
       cwd: pathJoin(buildPath, baseDir, "src")
     })
   } else {
